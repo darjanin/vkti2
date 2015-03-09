@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import random
 
 def read_input():
     count = int(input())
@@ -29,40 +30,68 @@ def kruskal(count, edges):
 
     return result
 
+def update_prices(edges, vertices):
+    result_edges = []
+
+    for (u, v, c) in edges:
+        if (u != v):
+            result_edges.append((u, v, c + vertices[u] + vertices[v]))
+        else:
+            result_edges.append((u, v, c))
+
+    return result_edges
+
 def kruskal_price(edges):
     total = 0
     for (u,v,c) in edges:
         total += c
     return total
 
-def tsp(edges):
-    result = []
+def calculate_vertices(edges):
+    vertex_count = {}
+    for (u,v,c) in edges:
+        if u in vertex_count:
+            vertex_count[u] += 1
+        else:
+            vertex_count[u] = 1
+        if v in vertex_count:
+            vertex_count[v] += 1
+        else:
+            vertex_count[v] = 1
 
-    for (u, v, c) in edges:
-        if (u not in result): result.append(u)
-        if (v not in result): result.append(v)
+    vertex_count = sorted(vertex_count.items(), key=lambda item: item[1])
 
-    result.append(result[0])
-
-    return result
-
-def tsp_price(vertices, edges, count):
+    vertices = []
+    for idx in range(len(vertex_count)):
+        vertices.append(0)
     total = 0
-    for idx in range(len(vertices)-1):
-        total += edges[vertices[idx]*count + vertices[idx+1]][2]
-    total += edges[vertices[0]*count + vertices[-1]][2]
-
-    return total
+    counter = 0
+    last = 0
+    for (key, value) in vertex_count:
+        if (value == 1):
+            vertices[key] = -1
+            total += -1
+        else:
+            vertices[key] = value - 1
+            total += value - 1
+    if total != 0:
+        vertices[len(vertices)-1] += total
+    return vertices
 
 if __name__ == '__main__':
     data = read_input()
 
     kruskal_result = kruskal(data['count'], data['edges'])
-    print(kruskal_result)
     kruskal_price_value = kruskal_price(kruskal_result)
-    print(kruskal_price_value)
 
-    tsp_result = tsp(kruskal_result)
-    print(tsp_result)
-    tsp_price_value = tsp_price(tsp_result, data['edges'], data['count'])
-    print(tsp_price_value)
+    vertices = calculate_vertices(kruskal_result)
+
+    update_edges = update_prices(data['edges'], vertices)
+
+    kruskal_result = kruskal(data['count'], update_edges)
+    kruskal_price_value = kruskal_price(kruskal_result)
+
+    result_str = []
+    for item in vertices:
+        result_str.append(str(item))
+    print(" ".join(result_str))
